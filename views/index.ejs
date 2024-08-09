@@ -9,7 +9,9 @@
 </head>
 
 <body>
-  <ul>
+  <p>下にコメントを送信すると送信した内容が表示されます</p>
+  <p>消したいコメントをクリックすると削除することができます</p>
+  <ul class="user-list">
     <% for (const user of users) { %>
       <li class="user-name"><%= user %></li>
     <% } %>

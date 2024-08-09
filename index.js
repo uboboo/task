@@ -1,6 +1,9 @@
 const express = require('express');
 const app = express();
 const path = require('node:path');
+const { MongoClient } = require('mongodb');
+const client = new MongoClient('mongodb://localhost:27017');
+
 app.set('view engine', 'ejs');
 // publicディレクトリ以下のファイルを静的ファイルとして配信
 app.use('/static', express.static(path.join(__dirname, 'public')));
@@ -9,11 +12,6 @@ const logMiddleware = (req, res, next) => {
   console.log(req.method, req.path);
   next();
 }
-
-app.get('/', logMiddleware, (req, res) => {
-  const users = ['alpha', 'beta', 'gamma'];
-  res.render(path.resolve(__dirname, 'views/index.ejs'), { users: users });
-})
 
 app.get('/user/:id', logMiddleware, (req, res) => {
   // :idをreq.params.idとして受け取る
@@ -25,8 +23,41 @@ app.use((err, req, res, next) => {
   res.status(500).send('Internal Server Error');
 });
 
-// ポート: 3000でサーバーを起動
-app.listen(3000, () => {
-  // サーバー起動後に呼び出されるCallback
-  console.log('start listening');
-});
+async function main(){
+  await client.connect();
+
+  const db = client.db('my-app');
+
+  app.get('/', logMiddleware, async (req, res) => {
+    const users = await db.collection('user').find().toArray();
+    const names = users.map((user)=>{
+      return user.name;
+    })
+    res.render(path.resolve(__dirname, 'views/index.ejs'), { users: names });
+  
+  });
+
+  app.post('/api/user', express.json(), async (req, res) => {
+    const name = req.body.name;
+    const year = toString(req.body.year);
+    const month = toString(req.body.month);
+    const day=toString(req.body.day);
+    const hours=toString(req.body.hours);
+    const min=toString(req.body.min);
+    const sec=toString(req.body.sec);
+    const time=year+"年"+month+"月"+day+"日"+":"+hours+"時"+min+"分"+sec+"秒"
+    if (!name || !time) {
+      res.status(400).send('Bad Request');
+      return;
+    }
+    await db.collection('user').insertOne({ name: name ,time:time});
+    res.status(200).send('Created');
+  });
+
+  app.listen(3000, () => {
+    // サーバー起動後に呼び出されるCallback
+    console.log('start listening');
+  });
+}
+
+main();
