@@ -30,6 +30,7 @@ async function main(){
 
   app.get('/', logMiddleware, async (req, res) => {
     const users = await db.collection('user').find().toArray();
+    
     const names = users.map((user)=>{
       return user.name;
     })
@@ -37,20 +38,25 @@ async function main(){
   
   });
 
-  app.post('/api/user', express.json(), async (req, res) => {
+  app.delete('/api/user', express.json(), async (req, res)=>{
     const name = req.body.name;
-    const year = toString(req.body.year);
-    const month = toString(req.body.month);
-    const day=toString(req.body.day);
-    const hours=toString(req.body.hours);
-    const min=toString(req.body.min);
-    const sec=toString(req.body.sec);
-    const time=year+"年"+month+"月"+day+"日"+":"+hours+"時"+min+"分"+sec+"秒"
-    if (!name || !time) {
+    if (!name ) {
       res.status(400).send('Bad Request');
       return;
     }
-    await db.collection('user').insertOne({ name: name ,time:time});
+
+    const query={name:name};
+    await db.collection('user').deleteMany(query);
+    res.status(200).send('delete');  
+  });
+
+  app.post('/api/user', express.json(), async (req, res) => {
+    const name = req.body.name;
+    if (!name ) {
+      res.status(400).send('Bad Request');
+      return;
+    }
+    await db.collection('user').insertOne({ name: name });
     res.status(200).send('Created');
   });
 
