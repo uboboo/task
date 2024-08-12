@@ -39,13 +39,12 @@ async function main(){
   });
 
   app.delete('/api/user', express.json(), async (req, res)=>{
-    const name = req.body.name;
-    if (!name ) {
+    const names = req.body.name;
+    if (!names ) {
       res.status(400).send('Bad Request');
       return;
     }
-
-    const query={name:name};
+    const query=Object.assign({},names);
     await db.collection('user').deleteMany(query);
     res.status(200).send('delete');  
   });
